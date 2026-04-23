@@ -1,0 +1,11 @@
+{
+  "prompts": [
+    { "id": "g1", "label": "Loan Eligibility (Not Eligible)", "prompt": "Am I eligible for a personal loan?" },
+    { "id": "g2", "label": "Loan Eligibility (Eligible)", "prompt": "Am I eligible for a personal loan?" },
+    { "id": "g3", "label": "Credit Card Eligibility", "prompt": "What credit card am I eligible for?" },
+    { "id": "g4", "label": "Home Loan Limit", "prompt": "What is the maximum home loan I can get?" },
+    { "id": "g5", "label": "Account Upgrade", "prompt": "How do I upgrade my savings account to Premium?" },
+    { "id": "g6", "label": "Credit Limit (After Upload)", "prompt": "Based on my uploaded salary slip what credit card limit am I eligible for?" },
+    { "id": "g7", "label": "Complaint / Escalation", "prompt": "This is unacceptable service I want to speak to a manager" }
+  ]
+}
