@@ -19,12 +19,12 @@ const formatFileSize = (bytes: number): string => {
 
 export default function InputBar({
   onSend,
-  disabled,
+  disabled = false,
   value: controlledValue,
   onChange,
   files = [],
   onFilesChange,
-  accept,
+  accept = ".txt,.pdf,.doc,.docx,.csv,.json",
   multiple = true,
 }: InputBarProps) {
   const [internal, setInternal] = useState("");
@@ -40,12 +40,13 @@ export default function InputBar({
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
+
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [internal]);
 
   const canSubmit = useMemo(() => {
-    return Boolean(internal.trim() || files.length);
+    return Boolean(internal.trim() || files.length > 0);
   }, [internal, files.length]);
 
   const handleChange = (nextValue: string) => {
@@ -53,66 +54,76 @@ export default function InputBar({
     onChange?.(nextValue);
   };
 
-  const mergeFiles = (incoming: FileList | null): File[] => {
-    if (!incoming) return files;
-
-    const merged = [...files];
-    const seen = new Set(
-      merged.map((file) => `${file.name}-${file.size}-${file.lastModified}`),
-    );
-
-    Array.from(incoming).forEach((file) => {
-      const key = `${file.name}-${file.size}-${file.lastModified}`;
-      if (!seen.has(key)) {
-        merged.push(file);
-        seen.add(key);
-      }
-    });
-
-    return merged;
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const nextFiles = mergeFiles(event.target.files);
-    onFilesChange?.(nextFiles);
+    const selected = Array.from(event.target.files ?? []);
+
+    console.log("Selected files:", selected);
+
+    if (selected.length === 0) return;
+
+    const merged = [...files];
+
+    selected.forEach((file) => {
+      const alreadyExists = merged.some(
+        (existing) =>
+          existing.name === file.name &&
+          existing.size === file.size &&
+          existing.lastModified === file.lastModified
+      );
+
+      if (!alreadyExists) {
+        merged.push(file);
+      }
+    });
+
+    onFilesChange?.(merged);
+
     event.target.value = "";
   };
 
   const removeFile = (index: number) => {
-    const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
+    const nextFiles = files.filter((_, i) => i !== index);
     onFilesChange?.(nextFiles);
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!canSubmit) return;
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (disabled || !canSubmit) return;
 
     onSend(internal.trim());
 
     setInternal("");
     onChange?.("");
-    onFilesChange?.([]);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
+    <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        onChange={handleFileSelect}
+        disabled={disabled}
+        style={{ display: "none" }}
+      />
+
       {files.length > 0 && (
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             gap: 8,
+            marginBottom: 10,
+            padding: "8px 10px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.04)",
           }}
         >
           {files.map((file, index) => (
@@ -122,31 +133,31 @@ export default function InputBar({
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "8px 10px",
-                borderRadius: 10,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                padding: "7px 10px",
+                borderRadius: 999,
+                background: "rgba(66,153,225,0.18)",
+                border: "1px solid rgba(66,153,225,0.35)",
+                color: "#fff",
+                fontSize: 13,
                 maxWidth: "100%",
               }}
             >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  title={file.name}
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: 220,
-                  }}
-                >
-                  {file.name}
-                </div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>
-                  {formatFileSize(file.size)}
-                </div>
-              </div>
+              <span>📎</span>
+
+              <span
+                title={file.name}
+                style={{
+                  maxWidth: 260,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontWeight: 600,
+                }}
+              >
+                {file.name}
+              </span>
+
+              <span style={{ opacity: 0.75 }}>{formatFileSize(file.size)}</span>
 
               <button
                 type="button"
@@ -156,10 +167,11 @@ export default function InputBar({
                 style={{
                   border: "none",
                   background: "transparent",
-                  color: "inherit",
-                  cursor: "pointer",
-                  fontSize: 16,
+                  color: "#fff",
+                  cursor: disabled ? "not-allowed" : "pointer",
+                  fontSize: 18,
                   lineHeight: 1,
+                  padding: 0,
                 }}
               >
                 ×
@@ -169,28 +181,25 @@ export default function InputBar({
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          hidden
-          multiple={multiple}
-          accept={accept}
-          onChange={handleFileSelect}
-        />
-
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-end",
+        }}
+      >
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={handleAttachClick}
           disabled={disabled}
           style={{
             padding: "10px 14px",
             borderRadius: 8,
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.12)",
             background: "transparent",
-            color: "inherit",
-            cursor: "pointer",
-            height: "44px",
+            color: "#fff",
+            cursor: disabled ? "not-allowed" : "pointer",
+            height: 44,
             flexShrink: 0,
           }}
         >
@@ -199,21 +208,26 @@ export default function InputBar({
 
         <textarea
           ref={textareaRef}
-          placeholder="Type your message"
           value={internal}
+          placeholder={
+            files.length > 0
+              ? "Add a message for the attached file..."
+              : "Type your message..."
+          }
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
+          rows={1}
           style={{
             flex: 1,
             padding: "10px 12px",
             borderRadius: 8,
-            border: "1px solid rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
             background: "transparent",
-            color: "inherit",
+            color: "#fff",
             resize: "none",
             overflowY: "auto",
-            minHeight: "44px",
-            maxHeight: "200px",
+            minHeight: 44,
+            maxHeight: 200,
             fontFamily:
               "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
             fontSize: 14,
@@ -230,9 +244,10 @@ export default function InputBar({
             border: "none",
             background: "var(--accent)",
             color: "#fff",
-            cursor: "pointer",
-            height: "44px",
+            cursor: disabled || !canSubmit ? "not-allowed" : "pointer",
+            height: 44,
             flexShrink: 0,
+            opacity: disabled || !canSubmit ? 0.6 : 1,
           }}
         >
           Send

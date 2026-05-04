@@ -10,60 +10,16 @@ import {
   setSelectedCustomerId,
 } from "./utils/customerStorage";
 import type { PromptItem } from "./components/PromptSelect";
-import type { Customer } from "./types/customer";
 
 const CUSTOMER_PROFILE_URL =
   "https://raw.githubusercontent.com/bananth2008/ai-callcenter/refs/heads/main/mcp_services/customer_profile/data/customers.json";
 
-type RemoteCustomer = Customer & {
-  segment?: string;
-  account_status?: string;
-  relationship_value?: string;
-  tenure_years?: number;
-  account_type?: string;
-  email?: string;
-  phone?: string;
-};
-
-type RemoteCustomerMap = Record<string, RemoteCustomer>;
-type NormalizedCustomersResponse = { customers: RemoteCustomer[] };
-
-function normalizeCustomers(payload: unknown): RemoteCustomer[] {
-  if (!payload || typeof payload !== "object") return [];
-
-  // Case 1: already in { customers: [...] } shape
-  if (
-    "customers" in payload &&
-    Array.isArray((payload as NormalizedCustomersResponse).customers)
-  ) {
-    return (payload as NormalizedCustomersResponse).customers;
-  }
-
-  // Case 2: keyed object { "11111": {...}, "12345": {...} }
-  return Object.values(payload as RemoteCustomerMap).map((customer) => ({
-    ...customer,
-    contact: {
-      ...(customer.contact ?? {}),
-      email: customer.contact?.email ?? customer.email,
-      phone: customer.contact?.phone ?? customer.phone,
-    },
-    account: {
-      ...(customer.account ?? {}),
-      account_type: customer.account?.account_type ?? customer.account_type ?? "",
-      account_id: customer.account?.account_id ?? customer.customer_id,
-      routing_number: customer.account?.routing_number ?? "",
-      balance: customer.account?.balance ?? 0,
-      currency: customer.account?.currency ?? "INR",
-    },
-  }));
-}
-
 export default function App(): any {
-  const [customers, setCustomers] = useState<RemoteCustomer[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
 
   const [selectedCustomerId, setSelectedCustomerIdState] = useState<string | null>(
-    () => getSelectedCustomerId()
+    () => getSelectedCustomerId(),
   );
 
   useEffect(() => {
@@ -73,35 +29,38 @@ export default function App(): any {
       try {
         setCustomersLoading(true);
 
-        const response = await fetch(CUSTOMER_PROFILE_URL, {
-          cache: "no-store",
-        });
+        const response = await fetch(CUSTOMER_PROFILE_URL);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch customers: ${response.status}`);
         }
 
-        const rawData = await response.json();
-        const normalizedCustomers = normalizeCustomers(rawData);
+        const data = await response.json();
+
+        const loadedCustomers = Array.isArray(data)
+          ? data
+          : data.customers ?? Object.values(data);
 
         if (cancelled) return;
 
-        setCustomers(normalizedCustomers);
+        setCustomers(loadedCustomers as any[]);
 
         setSelectedCustomerIdState((current) => {
           if (
             current &&
-            normalizedCustomers.some((c) => c.customer_id === current)
+            loadedCustomers.some(
+              (customer: any) => customer.customer_id === current,
+            )
           ) {
             return current;
           }
 
-          return normalizedCustomers.length > 0
-            ? normalizedCustomers[0].customer_id
+          return loadedCustomers.length > 0
+            ? loadedCustomers[0].customer_id
             : null;
         });
       } catch (error) {
-        console.error("Failed to load customers from remote source", error);
+        console.error("Failed to load customers", error);
 
         if (!cancelled) {
           setCustomers([]);
@@ -122,14 +81,12 @@ export default function App(): any {
   }, []);
 
   useEffect(() => {
-    if (selectedCustomerId) {
-      setSelectedCustomerId(selectedCustomerId);
-    }
+    if (selectedCustomerId) setSelectedCustomerId(selectedCustomerId);
   }, [selectedCustomerId]);
 
   const selectedCustomer = useMemo(
     () => customers.find((c) => c.customer_id === selectedCustomerId) ?? null,
-    [customers, selectedCustomerId]
+    [customers, selectedCustomerId],
   );
 
   const prompts = (promptsData as any).prompts as PromptItem[];
@@ -137,7 +94,7 @@ export default function App(): any {
 
   const selectedPrompt = useMemo(
     () => prompts.find((p) => p.id === selectedPromptId) ?? null,
-    [prompts, selectedPromptId]
+    [prompts, selectedPromptId],
   );
 
   const [inputValue, setInputValue] = useState("");
@@ -171,7 +128,6 @@ export default function App(): any {
         color: "#fff",
       }}
     >
-      {/* Sidebar */}
       <aside
         style={{
           borderRight: "1px solid rgba(255,255,255,0.08)",
@@ -181,30 +137,53 @@ export default function App(): any {
           gap: 16,
         }}
       >
-        {/* Updated Header */}
-        <div className="brand-card">
-          <h1>AI Call Center Chat Bot</h1>
-          {selectedCustomer && <p>{selectedCustomer.name}</p>}
+        <div>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+            AI Call Center Chat Bot
+          </h2>
+          {selectedCustomer && (
+            <div style={{ fontSize: 12, opacity: 0.7 }}>
+              {selectedCustomer.name}
+            </div>
+          )}
         </div>
 
         <CustomerSelect
           customers={customers}
           value={selectedCustomerId}
           onChange={(id) => setSelectedCustomerIdState(id)}
-          loading={customersLoading}
         />
+
+        {customersLoading && (
+          <div style={{ fontSize: 12, opacity: 0.7 }}>
+            Fetching customers...
+          </div>
+        )}
 
         <PromptSelect
           prompts={prompts}
           value={selectedPromptId}
-          onChange={setSelectedPromptId}
+          onChange={(id) => setSelectedPromptId(id)}
         />
 
         {selectedPrompt && (
-          <div className="selected-prompt-card">
-            <h3>Selected Prompt</h3>
-            <strong>{selectedPrompt.label}</strong>
-            <p>{selectedPrompt.prompt}</p>
+          <div
+            style={{
+              padding: 12,
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+              Selected Prompt
+            </div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>
+              {selectedPrompt.label}
+            </div>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>
+              {selectedPrompt.prompt}
+            </div>
           </div>
         )}
 
@@ -222,15 +201,14 @@ export default function App(): any {
           New Conversation
         </button>
 
-        <p className="session-note">
+        <div style={{ fontSize: 12, opacity: 0.7 }}>
           Session stored in localStorage — Selected:{" "}
           {customersLoading
             ? "Fetching customers..."
             : selectedCustomer?.customer_id ?? "—"}
-        </p>
+        </div>
       </aside>
 
-      {/* Main Chat */}
       <main
         style={{
           display: "flex",
@@ -240,28 +218,34 @@ export default function App(): any {
           minHeight: "100vh",
         }}
       >
-        {error && <div
-          role="alert"
-          style={{
-            color: "#ffb4b4",
-            background: "rgba(255,0,0,0.08)",
-            border: "1px solid rgba(255,0,0,0.18)",
-            borderRadius: 8,
-            padding: 10,
-          }}
-        >{error}</div>}
-
         <div style={{ flex: 1, minHeight: 0 }}>
-          <ChatWindow messages={messages} loading={loading} />
+          <ChatWindow messages={messages} />
         </div>
 
+        {error && (
+          <div
+            role="alert"
+            style={{
+              color: "#ffb4b4",
+              background: "rgba(255,0,0,0.08)",
+              border: "1px solid rgba(255,0,0,0.18)",
+              borderRadius: 8,
+              padding: 10,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <InputBar
+          onSend={handleSend}
+          disabled={loading}
           value={inputValue}
           onChange={setInputValue}
-          onSend={handleSend}
-          loading={loading}
-          selectedFiles={selectedFiles}
-          setSelectedFiles={setSelectedFiles}
+          files={selectedFiles}
+          onFilesChange={setSelectedFiles}
+          accept=".txt"
+          multiple={true}
         />
       </main>
     </div>

@@ -42,6 +42,7 @@ export function useChat() {
   const clear = useCallback(() => {
     setMessages([]);
     setError(null);
+
     try {
       localStorage.removeItem(storageKey);
     } catch (e) {
@@ -54,7 +55,7 @@ export function useChat() {
       prompt: string,
       authTokenB64?: string,
       customerId?: string,
-      files: File[] = [],
+      files: File[] = []
     ) => {
       setError(null);
 
@@ -69,6 +70,7 @@ export function useChat() {
       setMessages((m) => [...m, userMsg]);
 
       const tempId = `temp-${uuidv4()}`;
+
       const tempMsg: Msg = {
         id: tempId,
         role: "assistant",
@@ -110,9 +112,12 @@ export function useChat() {
           timestamp: new Date().toISOString(),
         };
 
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? assistantMsg : m)));
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? assistantMsg : m))
+        );
       } catch (err: any) {
         console.error("send error:", err);
+
         const errText = err?.message ?? "Unknown error";
         setError(errText);
 
@@ -124,15 +129,24 @@ export function useChat() {
           error: true,
         };
 
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? errMsg : m)));
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? errMsg : m))
+        );
       } finally {
         setLoading(false);
       }
     },
-    [sessionId],
+    [sessionId]
   );
 
-  return { messages, loading, error, send, clear, setMessages };
+  return {
+    messages,
+    loading,
+    error,
+    send,
+    clear,
+    setMessages,
+  };
 }
 
 export default useChat;
