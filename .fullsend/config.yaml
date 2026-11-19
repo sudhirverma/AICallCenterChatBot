@@ -16,6 +16,10 @@ roles:
 allowed_remote_resources:
   - https://raw.githubusercontent.com/fullsend-ai/fullsend/
   - https://raw.githubusercontent.com/fullsend-ai/agents/
+agents:
+  - name: triage
+    model: gateway/rits/zai-org/glm-5-3
+    source: https://raw.githubusercontent.com/fullsend-ai/agents/62f25ace461b9c11a712bf5762f6e881892e4b74/harness/triage.yaml#sha256=bf4cd9cca1bb15d7849fbe236bc7c6f83db67c9005f8ec53ec929902c592416f
 tracker:
   github:
     allowed_targets:
