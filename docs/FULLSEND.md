@@ -43,20 +43,31 @@ Install each app on `sudhirverma/AICallCenterChatBot` (or your org):
 
 Fix agent shares the **coder** app.
 
-### 4. Push scaffold + sync repo settings
+### 4. Scaffold PR + GitHub settings
 
-Either merge a PR from branch `fullsend/scaffold-install` (setup’s default), or push these files to `main`, then converge secrets and variables:
+Merge **[PR #3](https://github.com/sudhirverma/AICallCenterChatBot/pull/3)** (`fullsend/scaffold-install`) so workflows and `.fullsend/config.yaml` land on `main`.
+
+This repo is already enrolled on GitHub with:
+
+| Setting | Value |
+| --- | --- |
+| `FULLSEND_MINT_URL` | `https://mint.fullsend.sh` (repo variable) |
+| `FULLSEND_INFERENCE_GATEWAY_API_KEY` | EnMaaS key (`sk-oai-…`) — **Actions secret** (from local `ENMAAS_API_KEY`, not in git) |
+| Inference | [EnMaaS](https://www.redhat.com/en/blog/EnMaaS-Red-Hat-pilot-for-open-source-inference) via `https://api.enmaas.devshift.net`, `auth: api-key`, `messages_auth_header: x-api-key`, model `rits/zai-org/glm-5-3` |
+| Runtime | `pi` (see `.fullsend/config.yaml`) |
+
+Re-converge after edits:
 
 ```bash
-fullsend github setup sudhirverma/AICallCenterChatBot
-# optional: --runtime codex|pi|claude
+export GH_TOKEN="$GITHUB_PAT"   # fine-grained: Contents, Workflows, Secrets, Variables
+fullsend github setup sudhirverma/AICallCenterChatBot --runtime pi \
+  --inference-gateway-url https://api.enmaas.devshift.net \
+  --inference-gateway-auth api-key \
+  --inference-gateway-model 'rits/zai-org/glm-5-3=anthropic-messages'
+fullsend github set sudhirverma/AICallCenterChatBot FULLSEND_INFERENCE_GATEWAY_API_KEY "$ENMAAS_API_KEY"
 ```
 
-**OpenAI-only** (no Vertex): omit `--inference-project` and `--inference-wif-provider`. Configure OpenAI WIF per [docs](https://fullsend.sh/docs/guides/getting-started/configuring-github).
-
-**Vertex**: pass `--inference-project` and `--inference-wif-provider` from [Getting Inference](https://fullsend.sh/docs/guides/getting-started/getting-inference).
-
-Setup sets repository variables (for example `FULLSEND_MINT_URL`, `FULLSEND_APP_SET`) and inference secrets when required.
+Add EnMaaS models under `inference.gateway.models` and use `gateway/<model-id>` in agent config when you customize harnesses. Upstream default harnesses may still name Vertex/OpenAI models until you override them under `.fullsend/customized/`.
 
 ### 5. Trigger the pipeline
 
