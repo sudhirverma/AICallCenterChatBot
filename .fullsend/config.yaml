@@ -3,35 +3,52 @@
 #
 # This file configures fullsend for per-repo installation mode.
 # See https://fullsend.sh/docs/guides/infrastructure/layered-config-reference
-
 version: "1"
+tracker:
+    github:
+        allowed_targets:
+            repos:
+                - fullsend-ai/fullsend
+                - fullsend-ai/agents
 runtime: pi
 roles:
-  - triage
-  - coder
-  - review
-  - fix
-  - retro
-  - prioritize
-allowed_remote_resources:
-  - https://raw.githubusercontent.com/fullsend-ai/fullsend/
-  - https://raw.githubusercontent.com/fullsend-ai/agents/
+    - triage
+    - coder
+    - review
+    - fix
+    - retro
+    - prioritize
 agents:
-  - name: triage
-    model: gateway/rits/zai-org/glm-5-3
-    source: https://raw.githubusercontent.com/fullsend-ai/agents/62f25ace461b9c11a712bf5762f6e881892e4b74/harness/triage.yaml#sha256=bf4cd9cca1bb15d7849fbe236bc7c6f83db67c9005f8ec53ec929902c592416f
-tracker:
-  github:
-    allowed_targets:
-      repos:
-        - sudhirverma/AICallCenterChatBot
-        - fullsend-ai/fullsend
+    - name: triage
+      model: gateway/rits/zai-org/glm-5-3
+    - name: code
+      model: gateway/rits/zai-org/glm-5-3
+    - name: review
+      model: gateway/rits/zai-org/glm-5-3
+      subagents:
+          correctness: gateway/rits/zai-org/glm-5-3
+          security: gateway/rits/zai-org/glm-5-3
+          security-triage: gateway/rits/zai-org/glm-5-3
+          style-conventions: gateway/rits/zai-org/glm-5-3
+          intent-coherence: gateway/rits/zai-org/glm-5-3
+          docs-currency: gateway/rits/zai-org/glm-5-3
+          cross-repo-contracts: gateway/rits/zai-org/glm-5-3
+          challenger: gateway/rits/zai-org/glm-5-3
+          risk-assessment: gateway/rits/zai-org/glm-5-3
+          user-experience: gateway/rits/zai-org/glm-5-3
+    - name: fix
+      model: gateway/rits/zai-org/glm-5-3
+    - name: retro
+      model: gateway/rits/zai-org/glm-5-3
+    - name: prioritize
+      model: gateway/rits/zai-org/glm-5-3
+allowed_remote_resources:
+    - https://raw.githubusercontent.com/fullsend-ai/fullsend/
+    - https://raw.githubusercontent.com/fullsend-ai/agents/
 inference:
-  gateway:
-    url: https://api.enmaas.devshift.net
-    auth: api-key
-    # EnMaaS (Praxis) expects x-api-key, not Authorization: Bearer (ADR 0142).
-    messages_auth_header: x-api-key
-    models:
-      rits/zai-org/glm-5-3:
-        api: anthropic-messages
+    gateway:
+        url: https://api.enmaas.devshift.net
+        auth: api-key
+        models:
+            rits/zai-org/glm-5-3:
+                api: openai-completions

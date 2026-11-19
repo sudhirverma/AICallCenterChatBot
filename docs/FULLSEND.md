@@ -61,7 +61,7 @@ This repo is already enrolled on GitHub with:
 | --- | --- |
 | `FULLSEND_MINT_URL` | `https://mint.fullsend.sh` (repo variable) |
 | `FULLSEND_INFERENCE_GATEWAY_API_KEY` | EnMaaS key (`sk-oai-…`) — **Actions secret** (from local `ENMAAS_API_KEY`, not in git) |
-| Inference | [EnMaaS](https://www.redhat.com/en/blog/EnMaaS-Red-Hat-pilot-for-open-source-inference) via `https://api.enmaas.devshift.net`, `auth: api-key`, `messages_auth_header: x-api-key`, model `rits/zai-org/glm-5-3` |
+| Inference | EnMaaS gateway `https://api.enmaas.devshift.net`, `auth: api-key`, model `gateway/rits/zai-org/glm-5-3` (`openai-completions`) — same shape as [hybridx/react-contact-app](https://github.com/hybridx/react-contact-app) |
 | Runtime | `pi` (see `.fullsend/config.yaml`) |
 
 Re-converge after edits:
@@ -71,11 +71,11 @@ export GH_TOKEN="$GITHUB_PAT"   # fine-grained: Contents, Workflows, Secrets, Va
 fullsend github setup sudhirverma/AICallCenterChatBot --runtime pi \
   --inference-gateway-url https://api.enmaas.devshift.net \
   --inference-gateway-auth api-key \
-  --inference-gateway-model 'rits/zai-org/glm-5-3=anthropic-messages'
+  --inference-gateway-model 'rits/zai-org/glm-5-3=openai-completions'
 fullsend github set sudhirverma/AICallCenterChatBot FULLSEND_INFERENCE_GATEWAY_API_KEY "$ENMAAS_API_KEY"
 ```
 
-Add EnMaaS models under `inference.gateway.models` and use `gateway/<model-id>` in agent config when you customize harnesses. Upstream default harnesses may still name Vertex/OpenAI models until you override them under `.fullsend/customized/`.
+Agent models are `gateway/rits/zai-org/glm-5-3` in `.fullsend/config.yaml`. No harness copies.
 
 ### 5. Trigger the pipeline
 

@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+.fullsend/.fullsend-cache/
 
 # Editor directories and files
 .vscode/*
