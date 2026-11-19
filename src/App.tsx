@@ -17,6 +17,8 @@ const CUSTOMER_PROFILE_URL =
 export default function App(): any {
   const [customers, setCustomers] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
+  const [customersError, setCustomersError] = useState<string | null>(null);
+  const [customersReloadKey, setCustomersReloadKey] = useState(0);
 
   const [selectedCustomerId, setSelectedCustomerIdState] = useState<string | null>(
     () => getSelectedCustomerId(),
@@ -28,6 +30,7 @@ export default function App(): any {
     const loadCustomers = async () => {
       try {
         setCustomersLoading(true);
+        setCustomersError(null);
 
         const response = await fetch(CUSTOMER_PROFILE_URL);
 
@@ -65,6 +68,9 @@ export default function App(): any {
         if (!cancelled) {
           setCustomers([]);
           setSelectedCustomerIdState(null);
+          setCustomersError(
+            "Failed to load customers. Check your connection and try again.",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -78,7 +84,7 @@ export default function App(): any {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [customersReloadKey]);
 
   useEffect(() => {
     if (selectedCustomerId) setSelectedCustomerId(selectedCustomerId);
@@ -107,6 +113,7 @@ export default function App(): any {
   }, [selectedPrompt]);
 
   const { messages, loading, error, send, clear } = useChat();
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const handleSend = (promptText: string) => {
     const token = selectedCustomer?.auth_token_b64;
@@ -155,8 +162,37 @@ export default function App(): any {
         />
 
         {customersLoading && (
-          <div style={{ fontSize: 12, opacity: 0.7 }}>
+          <div role="status" style={{ fontSize: 12, opacity: 0.7 }}>
             Fetching customers...
+          </div>
+        )}
+
+        {customersError && (
+          <div
+            role="alert"
+            style={{
+              fontSize: 12,
+              color: "#ffb4b4",
+              background: "rgba(255,0,0,0.08)",
+              border: "1px solid rgba(255,0,0,0.18)",
+              borderRadius: 8,
+              padding: 10,
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>{customersError}</div>
+            <button
+              onClick={() => setCustomersReloadKey((key) => key + 1)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.18)",
+                background: "transparent",
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -187,21 +223,70 @@ export default function App(): any {
           </div>
         )}
 
-        <button
-          onClick={clear}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background: "transparent",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          New Conversation
-        </button>
+        {confirmingClear ? (
+          <div
+            role="alert"
+            style={{
+              padding: 10,
+              borderRadius: 8,
+              border: "1px solid rgba(255,0,0,0.18)",
+              background: "rgba(255,0,0,0.08)",
+              fontSize: 12,
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              Clear this conversation? The current message history will be
+              discarded.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  clear();
+                  setConfirmingClear(false);
+                }}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,0,0,0.3)",
+                  background: "rgba(255,0,0,0.15)",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Yes, clear
+              </button>
+              <button
+                onClick={() => setConfirmingClear(false)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "transparent",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingClear(true)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "transparent",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            New Conversation
+          </button>
+        )}
 
-        <div style={{ fontSize: 12, opacity: 0.7 }}>
+        <div role="status" style={{ fontSize: 12, opacity: 0.7 }}>
           Session stored in localStorage — Selected:{" "}
           {customersLoading
             ? "Fetching customers..."
