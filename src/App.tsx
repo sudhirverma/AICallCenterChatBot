@@ -244,7 +244,6 @@ export default function App(): any {
           onChange={setInputValue}
           files={selectedFiles}
           onFilesChange={setSelectedFiles}
-          accept=".txt"
           multiple={true}
         />
       </main>

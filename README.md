@@ -18,7 +18,10 @@ assistant that has access to the customer's context.
   localStorage, so a page reload keeps the conversation.
 - **Live feedback** — animated typing indicator while the assistant responds.
 - **Optional authentication** — customer profiles may carry an auth token
-  that is sent as HTTP Basic auth to the backend.
+  that is sent as HTTP Basic auth to the backend. This pattern is for local
+  or demo use only: the token is part of the publicly fetched customer
+  profile data, so anything in it is visible to end users. For production,
+  issue tokens server-side instead of shipping them in the profile JSON.
 
 ## Tech stack
 
@@ -29,7 +32,8 @@ assistant that has access to the customer's context.
 
 ## Getting started
 
-Requires Node.js 20+.
+Requires Node.js 20.19+ or 22.12+ (the minimum versions supported by
+Vite 7).
 
 ```bash
 npm install
@@ -80,8 +84,11 @@ docker compose up --build
 ```
 
 The container builds the app with Vite, serves the `dist/` output with nginx,
-and is exposed on <http://localhost:8080>. `VITE_CHAT_API` is passed through
-from your environment to the build.
+and is exposed on <http://localhost:8080>. `VITE_CHAT_API` is baked in at
+build time: set it in the repo-root `.env` (see [Configuration](#configuration))
+before running `docker compose up --build`. The `environment:` entry in
+`docker-compose.yml` only affects the runtime nginx container — it is not
+visible to the build stage and does not reach the browser app.
 
 ## Project structure
 
