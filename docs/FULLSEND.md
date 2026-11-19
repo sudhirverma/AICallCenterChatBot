@@ -31,17 +31,25 @@ gh auth login
 
 ### 3. Install GitHub Apps (org or user)
 
-Install each app on `sudhirverma/AICallCenterChatBot` (or your org):
+On **Repository → Settings → GitHub Apps**, click **Configure** for each row (same five apps as below).  
+If the app is not installed yet, use the link for that role; on each page:
 
-| Role | Install |
+1. Choose account **sudhirverma** (or your org).
+2. **Only select repositories** → check **AICallCenterChatBot**.
+3. Accept defaults (fullsend needs Issues + PR + Actions + metadata).
+4. **Install** (or **Save** when updating an existing install).
+
+Links below suggest this repo (`repository_id=1218858893`):
+
+| Role | Install / configure |
 | --- | --- |
-| triage | https://github.com/apps/fullsend-ai-triage/installations/new |
-| coder | https://github.com/apps/fullsend-ai-coder/installations/new |
-| review | https://github.com/apps/fullsend-ai-review/installations/new |
-| retro | https://github.com/apps/fullsend-ai-retro/installations/new |
-| prioritize | https://github.com/apps/fullsend-ai-prioritize/installations/new |
+| triage | https://github.com/apps/fullsend-ai-triage/installations/new?suggested_repository_id=1218858893 |
+| coder | https://github.com/apps/fullsend-ai-coder/installations/new?suggested_repository_id=1218858893 |
+| review | https://github.com/apps/fullsend-ai-review/installations/new?suggested_repository_id=1218858893 |
+| retro | https://github.com/apps/fullsend-ai-retro/installations/new?suggested_repository_id=1218858893 |
+| prioritize | https://github.com/apps/fullsend-ai-prioritize/installations/new?suggested_repository_id=1218858893 |
 
-Fix agent shares the **coder** app.
+Fix agent shares the **coder** app (no separate install).
 
 ### 4. Scaffold PR + GitHub settings
 
