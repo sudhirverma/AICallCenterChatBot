@@ -1,14 +1,103 @@
 # AI Call Center ChatBot
 
-React + TypeScript chat UI (Vite) for call-center style conversations.
+A call-center style AI chat interface built with React and TypeScript. Agents
+pick a customer profile, attach supporting documents, and converse with an AI
+assistant that has access to the customer's context.
 
-## Development
+## Features
+
+- **Customer selection** — customer profiles are loaded from a remote
+  customer-profile service and the active customer is remembered between
+  visits (localStorage).
+- **Prompt presets** — common quick-start prompts are available from a
+  dropdown (`src/data/prompts.json`).
+- **Document attachments** — attach `.txt`, `.pdf`, `.doc`, `.docx`, `.csv`,
+  or `.json` files to a message; documents are uploaded and their extracted
+  context is passed along with the chat request.
+- **Persistent conversations** — messages are stored per session in
+  localStorage, so a page reload keeps the conversation.
+- **Live feedback** — animated typing indicator while the assistant responds.
+- **Optional authentication** — customer profiles may carry an auth token
+  that is sent as HTTP Basic auth to the backend.
+
+## Tech stack
+
+- [React 19](https://react.dev/) with TypeScript
+- [Vite 7](https://vite.dev/) for development and builds
+- [ESLint 9](https://eslint.org/) with typescript-eslint
+- Docker + nginx for production deployment
+
+## Getting started
+
+Requires Node.js 20+.
 
 ```bash
 npm install
 npm run dev
 ```
 
+The dev server starts on Vite's default port (5173).
+
+### Available scripts
+
+| Script           | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `npm run dev`    | Start the Vite development server             |
+| `npm run build`  | Type-check (`tsc -b`) and build for production |
+| `npm run lint`   | Run ESLint                                    |
+| `npm run preview`| Preview the production build locally          |
+
+## Configuration
+
+Copy the example environment file and adjust it:
+
+```bash
+cp .env.example .env
+```
+
+The app reads the following variable:
+
+| Variable          | Description                                                                 |
+| ----------------- | --------------------------------------------------------------------------- |
+| `VITE_CHAT_API`   | Base URL of the chat backend. Defaults to `http://localhost:8000` if unset. |
+
+The backend is expected to expose two endpoints:
+
+- `POST /upload` — accepts `{ customer_id, document_text }` and returns the
+  document context used for the conversation.
+- `POST /chat` — accepts `{ customer_id, message, document_context, session_id }`
+  and returns the assistant reply.
+
+`.env.example` also contains credentials for the Fullsend agent tooling
+(`GITHUB_PAT`, `ENMAAS_API_KEY`); these are not read by the app itself.
+
+## Deployment
+
+Build and serve the app with Docker:
+
+```bash
+docker compose up --build
+```
+
+The container builds the app with Vite, serves the `dist/` output with nginx,
+and is exposed on <http://localhost:8080>. `VITE_CHAT_API` is passed through
+from your environment to the build.
+
+## Project structure
+
+```
+src/
+├── components/   # UI: ChatWindow, CustomerSelect, InputBar, Message, PromptSelect
+├── data/         # Static prompt presets (prompts.json)
+├── hooks/        # useChat (chat state + persistence), useDotsAnimation
+├── services/     # api.ts — backend /chat and /upload calls
+├── styles/       # Global CSS
+├── types/        # Shared TypeScript types (chat, customer)
+└── utils/        # Session id and customer-selection persistence helpers
+```
+
 ## Fullsend (autonomous SDLC agents)
 
-GitHub agent pipeline scaffold for [Fullsend](https://fullsend.sh/) is in this repo. See [docs/FULLSEND.md](docs/FULLSEND.md) for enrolling `sudhirverma/AICallCenterChatBot` and running agents on issues/PRs.
+GitHub agent pipeline scaffold for [Fullsend](https://fullsend.sh/) is in
+this repo. See [docs/FULLSEND.md](docs/FULLSEND.md) for enrolling
+`sudhirverma/AICallCenterChatBot` and running agents on issues/PRs.
