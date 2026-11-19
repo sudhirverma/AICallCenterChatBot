@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import ChatWindow from "./components/ChatWindow";
 import InputBar from "./components/InputBar";
 import { useChat } from "./hooks/useChat";
@@ -13,6 +14,15 @@ import type { PromptItem } from "./components/PromptSelect";
 
 const CUSTOMER_PROFILE_URL =
   "https://raw.githubusercontent.com/bananth2008/ai-callcenter/refs/heads/main/mcp_services/customer_profile/data/customers.json";
+
+const secondaryButtonStyle: CSSProperties = {
+  padding: "10px 14px",
+  borderRadius: 8,
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "transparent",
+  color: "#fff",
+  cursor: "pointer",
+};
 
 export default function App(): any {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -49,13 +59,15 @@ export default function App(): any {
         setCustomers(loadedCustomers as any[]);
 
         setSelectedCustomerIdState((current) => {
+          const preferred = current ?? getSelectedCustomerId();
+
           if (
-            current &&
+            preferred &&
             loadedCustomers.some(
-              (customer: any) => customer.customer_id === current,
+              (customer: any) => customer.customer_id === preferred,
             )
           ) {
-            return current;
+            return preferred;
           }
 
           return loadedCustomers.length > 0
@@ -114,6 +126,38 @@ export default function App(): any {
 
   const { messages, loading, error, send, clear } = useChat();
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const clearConfirmButtonRef = useRef<HTMLButtonElement>(null);
+  const newConversationButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldReturnFocusRef = useRef(false);
+
+  const requestClearConfirmation = () => {
+    shouldReturnFocusRef.current = true;
+    setConfirmingClear(true);
+  };
+
+  const dismissClearConfirmation = () => {
+    setConfirmingClear(false);
+  };
+
+  const confirmClear = () => {
+    clear();
+    setConfirmingClear(false);
+  };
+
+  useEffect(() => {
+    if (confirmingClear) {
+      clearConfirmButtonRef.current?.focus();
+    } else if (shouldReturnFocusRef.current) {
+      shouldReturnFocusRef.current = false;
+      newConversationButtonRef.current?.focus();
+    }
+  }, [confirmingClear]);
+
+  const handleClearConfirmKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      dismissClearConfirmation();
+    }
+  };
 
   const handleSend = (promptText: string) => {
     const token = selectedCustomer?.auth_token_b64;
@@ -182,14 +226,7 @@ export default function App(): any {
             <div style={{ marginBottom: 8 }}>{customersError}</div>
             <button
               onClick={() => setCustomersReloadKey((key) => key + 1)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.18)",
-                background: "transparent",
-                color: "#fff",
-                cursor: "pointer",
-              }}
+              style={secondaryButtonStyle}
             >
               Retry
             </button>
@@ -225,7 +262,10 @@ export default function App(): any {
 
         {confirmingClear ? (
           <div
-            role="alert"
+            role="alertdialog"
+            aria-labelledby="clear-confirm-title"
+            aria-describedby="clear-confirm-description"
+            onKeyDown={handleClearConfirmKeyDown}
             style={{
               padding: 10,
               borderRadius: 8,
@@ -234,16 +274,19 @@ export default function App(): any {
               fontSize: 12,
             }}
           >
-            <div style={{ marginBottom: 8 }}>
-              Clear this conversation? The current message history will be
-              discarded.
+            <div
+              id="clear-confirm-title"
+              style={{ fontWeight: 600, marginBottom: 4 }}
+            >
+              Clear this conversation?
+            </div>
+            <div id="clear-confirm-description" style={{ marginBottom: 8 }}>
+              The current message history will be discarded.
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button
-                onClick={() => {
-                  clear();
-                  setConfirmingClear(false);
-                }}
+                ref={clearConfirmButtonRef}
+                onClick={confirmClear}
                 style={{
                   padding: "8px 12px",
                   borderRadius: 8,
@@ -256,15 +299,8 @@ export default function App(): any {
                 Yes, clear
               </button>
               <button
-                onClick={() => setConfirmingClear(false)}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  background: "transparent",
-                  color: "#fff",
-                  cursor: "pointer",
-                }}
+                onClick={dismissClearConfirmation}
+                style={secondaryButtonStyle}
               >
                 Cancel
               </button>
@@ -272,15 +308,9 @@ export default function App(): any {
           </div>
         ) : (
           <button
-            onClick={() => setConfirmingClear(true)}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "transparent",
-              color: "#fff",
-              cursor: "pointer",
-            }}
+            ref={newConversationButtonRef}
+            onClick={requestClearConfirmation}
+            style={secondaryButtonStyle}
           >
             New Conversation
           </button>

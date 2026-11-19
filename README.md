@@ -23,8 +23,10 @@ assistant that has access to the customer's context.
 - **Optional authentication** — customer profiles may carry an auth token
   that is sent as HTTP Basic auth to the backend. This pattern is for local
   or demo use only: the token is part of the publicly fetched customer
-  profile data, so anything in it is visible to end users. For production,
-  issue tokens server-side instead of shipping them in the profile JSON.
+  profile data, so anything in it is visible to end users. Treat the
+  Basic-auth token as non-secret and grant it only demo-scope access to the
+  backend. For production, issue tokens server-side instead of shipping
+  them in the profile JSON.
 
 ## Tech stack
 
