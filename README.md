@@ -11,9 +11,12 @@ assistant that has access to the customer's context.
   visits (localStorage).
 - **Prompt presets** — common quick-start prompts are available from a
   dropdown (`src/data/prompts.json`).
-- **Document attachments** — attach `.txt`, `.pdf`, `.doc`, `.docx`, `.csv`,
-  or `.json` files to a message; documents are uploaded and their extracted
-  context is passed along with the chat request.
+- **Document attachments** — attach `.txt` files to a message; the file's
+  text is uploaded to the backend and the returned document context is
+  passed along with the chat request. Only plain-text attachments are
+  supported: the client reads files as UTF-8 text (`src/services/api.ts`),
+  so binary document formats (`.pdf`, `.doc`, `.docx`) are neither accepted
+  by the file picker nor parsed before upload.
 - **Persistent conversations** — messages are stored per session in
   localStorage, so a page reload keeps the conversation.
 - **Live feedback** — animated typing indicator while the assistant responds.
