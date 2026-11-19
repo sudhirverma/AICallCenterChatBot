@@ -14,9 +14,12 @@ assistant that has access to the customer's context.
 - **Document attachments** — attach `.txt` files to a message; the file's
   text is uploaded to the backend and the returned document context is
   passed along with the chat request. Only plain-text attachments are
-  supported: the client reads files as UTF-8 text (`src/services/api.ts`),
-  so binary document formats (`.pdf`, `.doc`, `.docx`) are neither accepted
-  by the file picker nor parsed before upload.
+  supported: the client reads files as UTF-8 text (`src/services/api.ts`)
+  and does not parse binary document formats (`.pdf`, `.doc`, `.docx`).
+  The file picker defaults to `.txt` files, but that filter is advisory
+  only — browsers let users pick other files, and nothing client-side
+  rejects them, so a binary file chosen this way would still be read as
+  text and uploaded with mangled content.
 - **Persistent conversations** — messages are stored per session in
   localStorage, so a page reload keeps the conversation.
 - **Live feedback** — animated typing indicator while the assistant responds.

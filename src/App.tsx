@@ -127,6 +127,7 @@ export default function App(): any {
   const { messages, loading, error, send, clear } = useChat();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const clearConfirmButtonRef = useRef<HTMLButtonElement>(null);
+  const clearCancelButtonRef = useRef<HTMLButtonElement>(null);
   const newConversationButtonRef = useRef<HTMLButtonElement>(null);
   const shouldReturnFocusRef = useRef(false);
 
@@ -156,6 +157,22 @@ export default function App(): any {
   const handleClearConfirmKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       dismissClearConfirmation();
+      return;
+    }
+
+    if (event.key === "Tab") {
+      const confirmButton = clearConfirmButtonRef.current;
+      const cancelButton = clearCancelButtonRef.current;
+
+      if (!confirmButton || !cancelButton) return;
+
+      event.preventDefault();
+
+      if (document.activeElement === cancelButton) {
+        confirmButton.focus();
+      } else {
+        cancelButton.focus();
+      }
     }
   };
 
@@ -233,6 +250,12 @@ export default function App(): any {
           </div>
         )}
 
+        {!customersLoading && !customersError && customers.length === 0 && (
+          <div role="status" style={{ fontSize: 12, opacity: 0.7 }}>
+            No customer profiles are available.
+          </div>
+        )}
+
         <PromptSelect
           prompts={prompts}
           value={selectedPromptId}
@@ -299,6 +322,7 @@ export default function App(): any {
                 Yes, clear
               </button>
               <button
+                ref={clearCancelButtonRef}
                 onClick={dismissClearConfirmation}
                 style={secondaryButtonStyle}
               >
@@ -317,7 +341,7 @@ export default function App(): any {
         )}
 
         <div role="status" style={{ fontSize: 12, opacity: 0.7 }}>
-          Session stored in localStorage — Selected:{" "}
+          Conversation is saved for this session — Selected:{" "}
           {customersLoading
             ? "Fetching customers..."
             : selectedCustomer?.customer_id ?? "—"}
