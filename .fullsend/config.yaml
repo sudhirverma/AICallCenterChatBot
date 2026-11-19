@@ -2,8 +2,10 @@
 # https://github.com/fullsend-ai/fullsend
 #
 # This file configures fullsend for per-repo installation mode.
-# See ADR 0033 for details.
+# See https://fullsend.sh/docs/guides/infrastructure/layered-config-reference
+
 version: "1"
+runtime: pi
 roles:
   - triage
   - coder
@@ -20,3 +22,12 @@ tracker:
       repos:
         - sudhirverma/AICallCenterChatBot
         - fullsend-ai/fullsend
+inference:
+  gateway:
+    url: https://api.enmaas.devshift.net
+    auth: api-key
+    # EnMaaS (Praxis) expects x-api-key, not Authorization: Bearer (ADR 0142).
+    messages_auth_header: x-api-key
+    models:
+      rits/zai-org/glm-5-3:
+        api: anthropic-messages
